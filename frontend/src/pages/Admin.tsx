@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
-import MDEditor from "@uiw/react-md-editor";
+import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
 interface ContentItemAdmin {
   key: string;
@@ -257,14 +257,24 @@ export default function Admin() {
                     style={{ width: "100%", padding: "10px" }}
                   />
                 ) : selected.type === "markdown" ? (
-                  <div style={{ border: "1px solid #ddd", borderRadius: "4px", overflow: "hidden" }}>
-                    <MDEditor
-                      value={editValue}
-                      onChange={(val) => setEditValue(val || "")}
-                      preview="live"
-                      visibleDragbar={true}
-                      height={400}
-                    />
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                      <div>
+                        <label style={{ fontWeight: "500", display: "block", marginBottom: "5px" }}>Editor</label>
+                        <textarea
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          placeholder="Enter markdown..."
+                          style={{ width: "100%", minHeight: "300px", padding: "10px", fontFamily: "monospace" }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: "500", display: "block", marginBottom: "5px" }}>Live Preview</label>
+                        <div style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "10px", minHeight: "300px", overflow: "auto", backgroundColor: "#fafafa" }}>
+                          <MarkdownRenderer content={editValue} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <textarea
