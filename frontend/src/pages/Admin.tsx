@@ -236,15 +236,49 @@ export default function Admin() {
     }
   };
 
+  // Helper to get a friendly display name for a key
+  const getDisplayName = (key: string): string => {
+    // For wizard keys, show step + section + field
+    if (key.startsWith("wizard.")) {
+      const parts = key.split(".");
+      // wizard.secure_access_setup.step.1.header.title -> "Step 1: header.title"
+      if (parts.length >= 6) {
+        const stepNum = parts[3];
+        const section = parts[4];
+        const field = parts.slice(5).join(".");
+        return `Step ${stepNum}: ${section}.${field}`;
+      }
+    }
+    // For home keys, show section.field
+    if (key.startsWith("home.")) {
+      return key.replace("home.", "");
+    }
+    // For other keys, show last 2-3 parts
+    const parts = key.split(".");
+    return parts.slice(-2).join(".");
+  };
+
   const groupedContent = {
     "Home Page": filteredContent.filter((item) => item.key.startsWith("home.")),
     "FAQ Page": filteredContent.filter((item) => item.key.startsWith("faq.")),
     "About Page": filteredContent.filter((item) => item.key.startsWith("about.")),
-    "Wizard 1: Secure Access Setup": filteredContent.filter((item) =>
-      item.key.startsWith("wizard.secure_access_setup.")
+    "Wizard 1: Secure Access - Step 1": filteredContent.filter((item) =>
+      item.key.startsWith("wizard.secure_access_setup.step.1.")
     ),
-    "Wizard 2: Data Import Quickstart": filteredContent.filter((item) =>
-      item.key.startsWith("wizard.data_import_quickstart.")
+    "Wizard 1: Secure Access - Step 2": filteredContent.filter((item) =>
+      item.key.startsWith("wizard.secure_access_setup.step.2.")
+    ),
+    "Wizard 1: Secure Access - Step 3": filteredContent.filter((item) =>
+      item.key.startsWith("wizard.secure_access_setup.step.3.")
+    ),
+    "Wizard 2: Data Import - Step 1": filteredContent.filter((item) =>
+      item.key.startsWith("wizard.data_import_quickstart.step.1.")
+    ),
+    "Wizard 2: Data Import - Step 2": filteredContent.filter((item) =>
+      item.key.startsWith("wizard.data_import_quickstart.step.2.")
+    ),
+    "Wizard 2: Data Import - Step 3": filteredContent.filter((item) =>
+      item.key.startsWith("wizard.data_import_quickstart.step.3.")
     ),
   };
 
@@ -284,8 +318,9 @@ export default function Admin() {
                         <button
                           className={`content-btn ${selected?.key === item.key ? "active" : ""}`}
                           onClick={() => handleSelect(item)}
+                          title={item.key}
                         >
-                          {item.key.split(".").pop()}
+                          {getDisplayName(item.key)}
                         </button>
                       </li>
                     ))}
