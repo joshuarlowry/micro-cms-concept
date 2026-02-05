@@ -33,9 +33,17 @@ export default function Home() {
       <div className="card">
         {heroBody && <MarkdownRenderer content={heroBody} />}
 
-        <div className="button-group">
-          <a href={ctaHref} style={{ textDecoration: "none" }}>
-            <button className="primary">{ctaLabel}</button>
+        <h3 style={{ marginTop: "24px", marginBottom: "16px" }}>Try Our Wizards</h3>
+        <div className="button-group" style={{ flexWrap: "wrap" }}>
+          <a href="/wizard/secure-access/step-1" style={{ textDecoration: "none" }}>
+            <button className="primary">
+              🔐 Secure Access Setup
+            </button>
+          </a>
+          <a href="/wizard/data-import/step-1" style={{ textDecoration: "none" }}>
+            <button className="primary">
+              📊 Data Import Quickstart
+            </button>
           </a>
         </div>
       </div>

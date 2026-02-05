@@ -20,6 +20,11 @@ interface Revision {
   created_by: string;
 }
 
+interface FAQItem {
+  question: string;
+  answer_md: string;
+}
+
 export default function Admin() {
   const contentContext = useContent();
   const [allContent, setAllContent] = useState<ContentItemAdmin[]>([]);
@@ -31,6 +36,7 @@ export default function Admin() {
   const [saveStatus, setSaveStatus] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorTab, setEditorTab] = useState<"edit" | "preview">("edit");
+  const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
 
   // Helper to infer type from key name
   const inferType = (key: string): string => {
@@ -113,15 +119,56 @@ export default function Admin() {
 
   const handleSelect = async (item: ContentItemAdmin) => {
     setSelected(item);
-    setEditValue(item.current_draft || item.current_published || "");
+    const value = item.current_draft || item.current_published || "";
+    setEditValue(value);
     setShowRevisions(false);
     setSaveStatus("");
     setSidebarOpen(false); // Close sidebar on mobile
     setEditorTab("edit");
 
+    // Parse FAQ items if this is the FAQ key
+    if (item.key === "faq.items") {
+      try {
+        const parsed = value ? JSON.parse(value) : [];
+        setFaqItems(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setFaqItems([]);
+      }
+    }
+
     // Fetch revisions for this key
     const revs = await contentContext.getRevisions(item.key);
     setRevisions(revs);
+  };
+
+  // FAQ editor helpers
+  const updateFaqItem = (index: number, field: "question" | "answer_md", value: string) => {
+    const updated = [...faqItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setFaqItems(updated);
+    setEditValue(JSON.stringify(updated, null, 2));
+  };
+
+  const addFaqItem = () => {
+    const updated = [...faqItems, { question: "", answer_md: "" }];
+    setFaqItems(updated);
+    setEditValue(JSON.stringify(updated, null, 2));
+  };
+
+  const removeFaqItem = (index: number) => {
+    const updated = faqItems.filter((_, i) => i !== index);
+    setFaqItems(updated);
+    setEditValue(JSON.stringify(updated, null, 2));
+  };
+
+  const moveFaqItem = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === faqItems.length - 1) return;
+    const updated = [...faqItems];
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    setFaqItems(updated);
+    setEditValue(JSON.stringify(updated, null, 2));
   };
 
   const handleSaveDraft = async () => {
@@ -340,6 +387,141 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
+                ) : selected.key === "faq.items" ? (
+                  <div>
+                    <label style={{ 
+                      fontWeight: "500", 
+                      display: "block", 
+                      marginBottom: "12px", 
+                      fontSize: "0.9em",
+                      color: "#555"
+                    }}>
+                      FAQ Items ({faqItems.length} questions)
+                    </label>
+                    
+                    {faqItems.map((item, index) => (
+                      <div key={index} style={{
+                        border: "2px solid #ddd",
+                        borderRadius: "8px",
+                        padding: "16px",
+                        marginBottom: "16px",
+                        backgroundColor: "#fafafa",
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                          <strong style={{ color: "#0066cc" }}>Question {index + 1}</strong>
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <button
+                              type="button"
+                              onClick={() => moveFaqItem(index, "up")}
+                              disabled={index === 0}
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "14px",
+                                cursor: index === 0 ? "not-allowed" : "pointer",
+                                opacity: index === 0 ? 0.5 : 1,
+                                border: "1px solid #ddd",
+                                borderRadius: "4px",
+                                background: "#fff",
+                              }}
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveFaqItem(index, "down")}
+                              disabled={index === faqItems.length - 1}
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "14px",
+                                cursor: index === faqItems.length - 1 ? "not-allowed" : "pointer",
+                                opacity: index === faqItems.length - 1 ? 0.5 : 1,
+                                border: "1px solid #ddd",
+                                borderRadius: "4px",
+                                background: "#fff",
+                              }}
+                            >
+                              ▼
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeFaqItem(index)}
+                              style={{
+                                padding: "4px 10px",
+                                fontSize: "14px",
+                                cursor: "pointer",
+                                border: "1px solid #dc3545",
+                                borderRadius: "4px",
+                                background: "#fff",
+                                color: "#dc3545",
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div style={{ marginBottom: "12px" }}>
+                          <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85em", color: "#666" }}>
+                            Question
+                          </label>
+                          <input
+                            type="text"
+                            value={item.question}
+                            onChange={(e) => updateFaqItem(index, "question", e.target.value)}
+                            placeholder="Enter the question..."
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              fontSize: "15px",
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label style={{ display: "block", marginBottom: "4px", fontSize: "0.85em", color: "#666" }}>
+                            Answer (markdown supported)
+                          </label>
+                          <textarea
+                            value={item.answer_md}
+                            onChange={(e) => updateFaqItem(index, "answer_md", e.target.value)}
+                            placeholder="Enter the answer (markdown supported)..."
+                            style={{
+                              width: "100%",
+                              minHeight: "100px",
+                              padding: "10px",
+                              fontSize: "14px",
+                              fontFamily: "inherit",
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              boxSizing: "border-box",
+                              resize: "vertical",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <button
+                      type="button"
+                      onClick={addFaqItem}
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        fontSize: "15px",
+                        cursor: "pointer",
+                        border: "2px dashed #0066cc",
+                        borderRadius: "8px",
+                        background: "#f0f7ff",
+                        color: "#0066cc",
+                        fontWeight: "500",
+                      }}
+                    >
+                      + Add FAQ Item
+                    </button>
+                  </div>
                 ) : (
                   <div>
                     <label style={{ 
@@ -354,7 +536,7 @@ export default function Admin() {
                     <textarea
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
-                      placeholder='Enter JSON, e.g. [{"q": "Question?", "a": "Answer"}]'
+                      placeholder='Enter JSON, e.g. [{"key": "value"}]'
                       style={{ 
                         width: "100%", 
                         minHeight: "200px", 
