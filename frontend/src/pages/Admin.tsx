@@ -53,6 +53,11 @@ export default function Admin() {
     "home.hero.body_md",
     "home.cta.label",
     "home.cta.href",
+    "home.wizards.section_title",
+    "home.wizards.wizard1.label",
+    "home.wizards.wizard1.href",
+    "home.wizards.wizard2.label",
+    "home.wizards.wizard2.href",
     // FAQ
     "faq.items",
     // About

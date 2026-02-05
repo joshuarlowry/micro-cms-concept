@@ -11,6 +11,11 @@ export default function Home() {
     "home.hero.body_md",
     "home.cta.label",
     "home.cta.href",
+    "home.wizards.section_title",
+    "home.wizards.wizard1.label",
+    "home.wizards.wizard1.href",
+    "home.wizards.wizard2.label",
+    "home.wizards.wizard2.href",
   ];
 
   useEffect(() => {
@@ -22,6 +27,11 @@ export default function Home() {
   const heroBody = content["home.hero.body_md"]?.value || "";
   const ctaLabel = content["home.cta.label"]?.value || "Get Started";
   const ctaHref = content["home.cta.href"]?.value || "/";
+  const wizardsSectionTitle = content["home.wizards.section_title"]?.value || "Try Our Wizards";
+  const wizard1Label = content["home.wizards.wizard1.label"]?.value || "Secure Access Setup";
+  const wizard1Href = content["home.wizards.wizard1.href"]?.value || "/wizard/secure-access/step-1";
+  const wizard2Label = content["home.wizards.wizard2.label"]?.value || "Data Import Quickstart";
+  const wizard2Href = content["home.wizards.wizard2.href"]?.value || "/wizard/data-import/step-1";
 
   return (
     <div className="page">
@@ -33,16 +43,16 @@ export default function Home() {
       <div className="card">
         {heroBody && <MarkdownRenderer content={heroBody} />}
 
-        <h3 style={{ marginTop: "24px", marginBottom: "16px" }}>Try Our Wizards</h3>
+        <h3 style={{ marginTop: "24px", marginBottom: "16px" }}>{wizardsSectionTitle}</h3>
         <div className="button-group" style={{ flexWrap: "wrap" }}>
-          <a href="/wizard/secure-access/step-1" style={{ textDecoration: "none" }}>
+          <a href={wizard1Href} style={{ textDecoration: "none" }}>
             <button className="primary">
-              🔐 Secure Access Setup
+              🔐 {wizard1Label}
             </button>
           </a>
-          <a href="/wizard/data-import/step-1" style={{ textDecoration: "none" }}>
+          <a href={wizard2Href} style={{ textDecoration: "none" }}>
             <button className="primary">
-              📊 Data Import Quickstart
+              📊 {wizard2Label}
             </button>
           </a>
         </div>

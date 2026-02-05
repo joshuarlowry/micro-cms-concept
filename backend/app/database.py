@@ -65,6 +65,11 @@ def init_db():
             {"key": "home.hero.body_md", "type": "markdown"},
             {"key": "home.cta.label", "type": "plain"},
             {"key": "home.cta.href", "type": "plain"},
+            {"key": "home.wizards.section_title", "type": "plain"},
+            {"key": "home.wizards.wizard1.label", "type": "plain"},
+            {"key": "home.wizards.wizard1.href", "type": "plain"},
+            {"key": "home.wizards.wizard2.label", "type": "plain"},
+            {"key": "home.wizards.wizard2.href", "type": "plain"},
             # FAQ page
             {"key": "faq.items", "type": "rich_json"},
             # About page
@@ -123,6 +128,11 @@ def init_db():
             "home.hero.body_md": ("markdown", "# Your Content, Your Control\n\n- Manage all content from one place\n- Edit pages, wizards, and FAQs instantly\n- See live previews before publishing\n\n**Try the wizards below to experience full-stack content management.**"),
             "home.cta.label": ("plain", "Start Wizard"),
             "home.cta.href": ("plain", "/wizard/secure-access/step-1"),
+            "home.wizards.section_title": ("plain", "Try Our Wizards"),
+            "home.wizards.wizard1.label": ("plain", "Secure Access Setup"),
+            "home.wizards.wizard1.href": ("plain", "/wizard/secure-access/step-1"),
+            "home.wizards.wizard2.label": ("plain", "Data Import Quickstart"),
+            "home.wizards.wizard2.href": ("plain", "/wizard/data-import/step-1"),
 
             # FAQ
             "faq.items": ("rich_json", '[{"question": "What is a wizard?", "answer_md": "A wizard is a multi-step form that guides users through a process. Both wizards in this app have fully editable instructional text!"}, {"question": "Can I edit wizard instructions?", "answer_md": "Yes! Go to **/admin** and search for `wizard.` keys. All text on every wizard step is editable and supports **Markdown**."}, {"question": "How do versioning and restore work?", "answer_md": "Every change creates a revision. You can view the revision history and restore any previous version. Restore creates a new revision, so no history is lost."}]'),
