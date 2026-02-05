@@ -1,3 +1,4 @@
+/* Base Reset */
 * {
   box-sizing: border-box;
 }
@@ -12,12 +13,14 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
+/* App Layout */
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
+/* Draft Mode Banner */
 .draft-banner {
   background-color: #fff3cd;
   border-bottom: 2px solid #ffc107;
@@ -29,7 +32,6 @@ body {
   gap: 10px;
   font-weight: 500;
   font-size: 0.9em;
-  z-index: 100;
 }
 
 .draft-banner button {
@@ -52,9 +54,6 @@ body {
   background-color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 0 16px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
 }
 
 .nav {
@@ -153,7 +152,7 @@ body {
   font-size: 0.85em;
 }
 
-/* Page-specific styles */
+/* Page Header */
 .page-header {
   margin-bottom: 24px;
 }
@@ -171,12 +170,14 @@ body {
   margin: 0;
 }
 
+/* Content Grid */
 .content-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
 }
 
+/* Cards */
 .card {
   background-color: white;
   border: 1px solid #ddd;
@@ -198,7 +199,7 @@ body {
   font-size: 1.1em;
 }
 
-/* Markdown content */
+/* Markdown Content */
 .markdown-content {
   line-height: 1.6;
   font-size: 1em;
@@ -330,7 +331,7 @@ select {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-family: inherit;
-  font-size: 16px; /* Prevents iOS zoom */
+  font-size: 16px;
   margin-bottom: 10px;
 }
 
@@ -358,7 +359,7 @@ textarea {
   font-weight: 500;
 }
 
-/* Radio buttons & Checkboxes */
+/* Radio & Checkbox Groups */
 .radio-group,
 .checkbox-group {
   display: flex;
@@ -401,146 +402,7 @@ textarea {
   flex: 1;
 }
 
-/* Admin UI */
-.admin-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.admin-sidebar {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.admin-sidebar h3 {
-  margin-top: 0;
-  font-size: 1.1em;
-}
-
-.sidebar-toggle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background-color: #0066cc;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 1em;
-  width: 100%;
-  min-height: 44px;
-}
-
-.sidebar-toggle:hover {
-  background-color: #0052a3;
-}
-
-.sidebar-content {
-  margin-top: 12px;
-}
-
-.admin-sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.admin-sidebar li {
-  margin-bottom: 8px;
-}
-
-.admin-sidebar .content-btn {
-  width: 100%;
-  text-align: left;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  padding: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9em;
-  min-height: 44px;
-}
-
-.admin-sidebar .content-btn:hover,
-.admin-sidebar .content-btn.active {
-  background-color: #0066cc;
-  color: white;
-  border-color: #0066cc;
-}
-
-.admin-content {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.search-box {
-  margin-bottom: 16px;
-}
-
-.search-box input {
-  width: 100%;
-  font-size: 16px;
-}
-
-.content-list {
-  margin-bottom: 24px;
-}
-
-.content-item {
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  min-height: 44px;
-}
-
-.content-item:hover {
-  background-color: #f0f0f0;
-}
-
-.content-item.selected {
-  background-color: #e3f2fd;
-  border-color: #0066cc;
-}
-
-.content-item-key {
-  font-weight: 500;
-  color: #333;
-  font-family: monospace;
-  font-size: 0.9em;
-  word-break: break-all;
-}
-
-.content-item-type {
-  font-size: 0.8em;
-  color: #999;
-  margin-top: 4px;
-}
-
-.editor-section {
-  margin-top: 24px;
-}
-
-.editor-section h3 {
-  margin-top: 0;
-  border-bottom: 2px solid #0066cc;
-  padding-bottom: 10px;
-  font-size: 1.1em;
-}
-
-/* Editor tabs for mobile */
+/* Editor Tabs (for markdown) */
 .editor-tabs {
   display: flex;
   gap: 0;
@@ -573,7 +435,7 @@ textarea {
   display: block;
 }
 
-/* Wizard styles */
+/* Wizard Styles */
 .wizard-container {
   max-width: 700px;
   margin: 0 auto;
@@ -628,7 +490,7 @@ textarea {
   gap: 10px;
 }
 
-/* Wizard Progress - Mobile optimized */
+/* Wizard Progress */
 .wizard-progress {
   display: flex;
   justify-content: space-between;
@@ -729,7 +591,7 @@ textarea {
   text-align: right;
 }
 
-/* Callout boxes */
+/* Callout Boxes */
 .callout {
   border-radius: 8px;
   padding: 16px;
@@ -751,7 +613,7 @@ textarea {
   border: 1px solid #0066cc;
 }
 
-/* Revision history */
+/* Revision History */
 .revision-item {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -780,7 +642,11 @@ textarea {
   word-break: break-word;
 }
 
-/* Responsive - Tablet */
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
+/* Tablet and up */
 @media (min-width: 768px) {
   .main {
     padding: 32px 24px;
@@ -792,28 +658,6 @@ textarea {
 
   .card {
     padding: 24px;
-  }
-
-  .admin-container {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 20px;
-  }
-
-  .admin-sidebar {
-    position: sticky;
-    top: 80px;
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-  }
-
-  .sidebar-toggle {
-    display: none;
-  }
-
-  .sidebar-content {
-    display: block !important;
-    margin-top: 0;
   }
 
   .wizard-progress .step span {
@@ -846,7 +690,7 @@ textarea {
   }
 }
 
-/* Responsive - Desktop */
+/* Desktop */
 @media (min-width: 1024px) {
   .main {
     padding: 40px 24px;
@@ -865,7 +709,7 @@ textarea {
   }
 }
 
-/* Responsive - Mobile */
+/* Mobile */
 @media (max-width: 767px) {
   .header {
     padding: 0 12px;
@@ -944,19 +788,6 @@ textarea {
 
   .button-group button {
     width: 100%;
-  }
-
-  /* Admin mobile-first */
-  .sidebar-content {
-    display: none;
-  }
-
-  .sidebar-content.open {
-    display: block;
-  }
-
-  .admin-content {
-    padding: 12px;
   }
 
   /* Stack editor/preview on mobile */
