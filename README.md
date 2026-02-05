@@ -15,6 +15,131 @@ A complete, production-ready example of a **database-backed CMS with editable mu
 - **No Authentication**: Single "default" user mode (add real auth as needed)
 - **One-Command Boot**: `docker compose up --build` and you're ready
 
+## 🔄 How Content Works
+
+### The Content Flow
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  PostgreSQL │────▶│  FastAPI    │────▶│  React      │────▶│  Page       │
+│  Database   │     │  /api/content│     │  Context    │     │  Component  │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+     ▲                                                             │
+     │                      ┌─────────────┐                        │
+     └──────────────────────│  /admin     │◀───────────────────────┘
+                            │  Panel      │   (edit & publish)
+                            └─────────────┘
+```
+
+### 1. Content is Stored in PostgreSQL
+
+Each piece of content has a unique **key** (like `home.hero.title`) stored in the `content_entries` table:
+
+```sql
+-- Example row in content_entries
+key               = 'home.hero.title'
+type              = 'plain'           -- plain | markdown | rich_json
+current_draft     = 'New Title (draft)'
+current_published = 'Welcome to Micro CMS'
+```
+
+### 2. Frontend Fetches Content via API
+
+The React app calls the API with the keys it needs:
+
+```
+GET /api/content?keys=home.hero.title,home.hero.subtitle&mode=published
+```
+
+Response:
+```json
+{
+  "home.hero.title": { "type": "plain", "value": "Welcome to Micro CMS" },
+  "home.hero.subtitle": { "type": "plain", "value": "A powerful CMS" }
+}
+```
+
+### 3. ContentContext Stores It Globally
+
+The `ContentProvider` wraps the app and provides content to all pages:
+
+```tsx
+// frontend/src/context/ContentContext.tsx
+const { content, fetchContent, mode } = useContent();
+
+// Fetch content for specific keys
+await fetchContent(["home.hero.title", "home.hero.subtitle"]);
+
+// Access the values
+const title = content["home.hero.title"]?.value || "Default Title";
+```
+
+### 4. Pages Display the Content
+
+Each page component fetches its required keys and renders them:
+
+```tsx
+// frontend/src/pages/Home.tsx
+export default function Home() {
+  const { content, fetchContent, mode } = useContent();
+
+  // Define which content keys this page needs
+  const keys = [
+    "home.hero.title",
+    "home.hero.subtitle",
+    "home.hero.body_md",
+  ];
+
+  // Fetch on mount (and when draft/published mode changes)
+  useEffect(() => {
+    fetchContent(keys);
+  }, [mode]);
+
+  // Use the content with fallbacks
+  const title = content["home.hero.title"]?.value || "Welcome";
+  const body = content["home.hero.body_md"]?.value || "";
+
+  return (
+    <div>
+      <h1>{title}</h1>
+      <MarkdownRenderer content={body} />
+    </div>
+  );
+}
+```
+
+### 5. Admin Panel Edits Content
+
+The `/admin` page lets you edit any content key:
+
+1. **Select a key** from the sidebar
+2. **Edit the value** (single-line input for plain text, textarea for markdown)
+3. **Save Draft** → stores in `current_draft` column
+4. **Publish** → copies to `current_published` column
+
+### Content Types
+
+| Type | Editor | Use Case |
+|------|--------|----------|
+| `plain` | Single-line input | Titles, labels, URLs, short text |
+| `markdown` | Multiline textarea + preview | Long-form content, instructions |
+| `rich_json` | JSON textarea | Structured data like FAQ items |
+
+### Key Naming Convention
+
+Keys follow a hierarchical pattern:
+
+```
+<page>.<section>.<field>
+<page>.<section>.<field>_md          # markdown content
+wizard.<wizard_id>.step.<n>.<section>.<field>
+```
+
+Examples:
+- `home.hero.title` → Home page, hero section, title field
+- `home.hero.body_md` → Home page, hero section, body (markdown)
+- `wizard.secure_access_setup.step.1.header.title` → Wizard 1, Step 1, header title
+
 ## 📁 Project Structure
 
 ```
@@ -89,10 +214,10 @@ docker compose up --build
 ```
 
 Then:
-- **Web App**: http://localhost:3000
-- **Admin Panel**: http://localhost:3000/admin
-- **API**: http://localhost:8000
-- **API Health**: http://localhost:8000/health
+- **Web App**: http://localhost:5173
+- **Admin Panel**: http://localhost:5173/admin
+- **API**: http://localhost:8000 (also proxied at http://localhost:5173/api)
+- **API Health**: http://localhost:5173/health
 
 The database will auto-initialize with migrations and seed data on first run.
 
