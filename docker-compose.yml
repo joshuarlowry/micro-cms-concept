@@ -46,6 +46,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
     container_name: micro-cms-web
     ports:
       - "5173:3000"
@@ -54,8 +56,6 @@ services:
         condition: service_healthy
     networks:
       - cms-network
-    environment:
-      VITE_API_URL: http://api:8000/api
 
 volumes:
   postgres_data:

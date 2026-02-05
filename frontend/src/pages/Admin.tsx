@@ -29,6 +29,8 @@ export default function Admin() {
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [showRevisions, setShowRevisions] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editorTab, setEditorTab] = useState<"edit" | "preview">("edit");
 
   useEffect(() => {
     // Fetch all known content keys
@@ -104,6 +106,8 @@ export default function Admin() {
     setEditValue(item.current_draft || item.current_published || "");
     setShowRevisions(false);
     setSaveStatus("");
+    setSidebarOpen(false); // Close sidebar on mobile
+    setEditorTab("edit");
 
     // Fetch revisions for this key
     const revs = await contentContext.getRevisions(item.key);
@@ -185,92 +189,114 @@ export default function Admin() {
   return (
     <div className="page">
       <div className="page-header">
-        <h1>📝 Content Admin Panel</h1>
-        <p className="subtitle">Edit all content for pages and wizards</p>
+        <h1>📝 Admin Panel</h1>
+        <p className="subtitle">Edit content for pages and wizards</p>
       </div>
 
       <div className="admin-container">
         <div className="admin-sidebar">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search content..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            />
-          </div>
+          <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <span>📂 {selected ? selected.key.split(".").slice(-2).join(".") : "Select Content"}</span>
+            <span>{sidebarOpen ? "▲" : "▼"}</span>
+          </button>
+          
+          <div className={`sidebar-content ${sidebarOpen ? "open" : ""}`}>
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search content..."
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+            </div>
 
-          {Object.entries(groupedContent).map(([group, items]) =>
-            items.length > 0 ? (
-              <div key={group} style={{ marginBottom: "25px" }}>
-                <h4 style={{ marginBottom: "10px", fontSize: "0.9em", color: "#0066cc" }}>
-                  {group}
-                </h4>
-                <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                  {items.map((item) => (
-                    <li key={item.key} style={{ marginBottom: "5px" }}>
-                      <button
-                        className={selected?.key === item.key ? "active" : ""}
-                        onClick={() => handleSelect(item)}
-                        style={{
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "10px",
-                          borderRadius: "4px",
-                          backgroundColor: selected?.key === item.key ? "#0066cc" : "#f0f0f0",
-                          color: selected?.key === item.key ? "white" : "#333",
-                          border: "1px solid " + (selected?.key === item.key ? "#0066cc" : "#ddd"),
-                          cursor: "pointer",
-                          fontSize: "0.85em",
-                          fontWeight: "500",
-                        }}
-                      >
-                        {item.key.split(".").pop()}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null
-          )}
+            {Object.entries(groupedContent).map(([group, items]) =>
+              items.length > 0 ? (
+                <div key={group} style={{ marginBottom: "20px" }}>
+                  <h4 style={{ marginBottom: "8px", fontSize: "0.85em", color: "#0066cc", fontWeight: "600" }}>
+                    {group}
+                  </h4>
+                  <ul>
+                    {items.map((item) => (
+                      <li key={item.key}>
+                        <button
+                          className={`content-btn ${selected?.key === item.key ? "active" : ""}`}
+                          onClick={() => handleSelect(item)}
+                        >
+                          {item.key.split(".").pop()}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null
+            )}
+          </div>
         </div>
 
         <div className="admin-content">
           {selected ? (
             <div>
-              <h3 style={{ marginTop: 0 }}>
-                Editing: <code>{selected.key}</code>
-              </h3>
-              <p style={{ color: "#666", marginBottom: "15px" }}>
-                Type: <strong>{selected.type}</strong>
-              </p>
+              <div style={{ marginBottom: "16px" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "1em", wordBreak: "break-all" }}>
+                  <code style={{ fontSize: "0.9em" }}>{selected.key}</code>
+                </h3>
+                <p style={{ color: "#666", margin: 0, fontSize: "0.9em" }}>
+                  Type: <strong>{selected.type}</strong>
+                </p>
+              </div>
 
-              <div className="editor-section">
-                <h4>Edit Content</h4>
-
+              <div className="editor-section" style={{ marginTop: "16px" }}>
                 {selected.type === "plain" ? (
                   <input
                     type="text"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     placeholder="Enter plain text"
-                    style={{ width: "100%", padding: "10px" }}
                   />
                 ) : selected.type === "markdown" ? (
                   <div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                      <div>
-                        <label style={{ fontWeight: "500", display: "block", marginBottom: "5px" }}>Editor</label>
+                    {/* Tabs for mobile */}
+                    <div className="editor-tabs">
+                      <button 
+                        className={`editor-tab ${editorTab === "edit" ? "active" : ""}`}
+                        onClick={() => setEditorTab("edit")}
+                      >
+                        Editor
+                      </button>
+                      <button 
+                        className={`editor-tab ${editorTab === "preview" ? "active" : ""}`}
+                        onClick={() => setEditorTab("preview")}
+                      >
+                        Preview
+                      </button>
+                    </div>
+                    
+                    {/* Split view for desktop, tabs for mobile */}
+                    <div className="editor-split">
+                      <div className={`editor-pane ${editorTab === "edit" ? "active" : ""}`}>
+                        <label style={{ fontWeight: "500", display: "block", marginBottom: "8px", fontSize: "0.9em" }}>
+                          Markdown Editor
+                        </label>
                         <textarea
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
                           placeholder="Enter markdown..."
-                          style={{ width: "100%", minHeight: "300px", padding: "10px", fontFamily: "monospace" }}
+                          style={{ width: "100%", minHeight: "250px", fontFamily: "monospace", fontSize: "14px" }}
                         />
                       </div>
-                      <div>
-                        <label style={{ fontWeight: "500", display: "block", marginBottom: "5px" }}>Live Preview</label>
-                        <div style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "10px", minHeight: "300px", overflow: "auto", backgroundColor: "#fafafa" }}>
+                      <div className={`editor-pane ${editorTab === "preview" ? "active" : ""}`}>
+                        <label style={{ fontWeight: "500", display: "block", marginBottom: "8px", fontSize: "0.9em" }}>
+                          Live Preview
+                        </label>
+                        <div style={{ 
+                          border: "1px solid #ddd", 
+                          borderRadius: "4px", 
+                          padding: "12px", 
+                          minHeight: "250px", 
+                          overflow: "auto", 
+                          backgroundColor: "#fafafa" 
+                        }}>
                           <MarkdownRenderer content={editValue} />
                         </div>
                       </div>
@@ -281,11 +307,11 @@ export default function Admin() {
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     placeholder="Enter JSON"
-                    style={{ width: "100%", minHeight: "200px", padding: "10px" }}
+                    style={{ width: "100%", minHeight: "200px", fontFamily: "monospace", fontSize: "14px" }}
                   />
                 )}
 
-                <div className="button-group" style={{ marginTop: "15px" }}>
+                <div className="button-group">
                   <button className="primary" onClick={handleSaveDraft}>
                     💾 Save Draft
                   </button>
@@ -295,7 +321,7 @@ export default function Admin() {
                 </div>
 
                 {saveStatus && (
-                  <p style={{ marginTop: "10px", color: saveStatus.includes("✗") ? "#dc3545" : "#28a745" }}>
+                  <p style={{ marginTop: "12px", color: saveStatus.includes("✗") ? "#dc3545" : "#28a745", fontWeight: "500" }}>
                     {saveStatus}
                   </p>
                 )}
@@ -311,46 +337,40 @@ export default function Admin() {
                     cursor: "pointer",
                     fontSize: "1em",
                     fontWeight: "500",
-                    padding: 0,
+                    padding: "8px 0",
+                    minHeight: "44px",
+                    textAlign: "left",
                   }}
                 >
                   {showRevisions ? "▼" : "▶"} Revision History ({revisions.length})
                 </button>
 
                 {showRevisions && (
-                  <div style={{ marginTop: "15px" }}>
+                  <div style={{ marginTop: "12px" }}>
                     {revisions.length > 0 ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {revisions.map((rev) => (
-                          <div
-                            key={rev.id}
-                            style={{
-                              border: "1px solid #ddd",
-                              borderRadius: "4px",
-                              padding: "10px",
-                              backgroundColor: "#f9f9f9",
-                            }}
-                          >
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                              <div style={{ flex: 1 }}>
+                          <div key={rev.id} className="revision-item">
+                            <div className="revision-header">
+                              <div className="revision-info">
                                 <p style={{ margin: 0, fontWeight: "500" }}>
                                   {rev.mode === "published" ? "🚀" : "📝"} {rev.mode.toUpperCase()}
                                 </p>
-                                <p style={{ margin: "5px 0 0 0", fontSize: "0.85em", color: "#666" }}>
+                                <p style={{ margin: "4px 0 0 0", fontSize: "0.85em", color: "#666" }}>
                                   {new Date(rev.created_at).toLocaleString()}
-                                </p>
-                                <p style={{ margin: "5px 0 0 0", fontSize: "0.85em", color: "#999" }}>
-                                  {rev.value.substring(0, 100)}...
                                 </p>
                               </div>
                               <button
                                 className="secondary"
                                 onClick={() => handleRestore(rev.id, rev.mode === "published" ? "draft" : "published")}
-                                style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                                style={{ flexShrink: 0 }}
                               >
                                 Restore
                               </button>
                             </div>
+                            <p className="revision-preview">
+                              {rev.value.substring(0, 80)}{rev.value.length > 80 ? "..." : ""}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -362,8 +382,11 @@ export default function Admin() {
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: "center", padding: "40px", color: "#999" }}>
-              <p>Select a content item from the left to edit</p>
+            <div style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>
+              <p style={{ fontSize: "1.1em" }}>👆 Select content to edit</p>
+              <p style={{ fontSize: "0.9em", marginTop: "8px" }}>
+                Use the menu above to browse content
+              </p>
             </div>
           )}
         </div>

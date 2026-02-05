@@ -1,5 +1,8 @@
 import React, { createContext, useState, useCallback, ReactNode } from "react";
 
+// API base URL - uses environment variable or falls back to relative path for dev
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 export interface ContentItem {
   type: "plain" | "markdown" | "rich_json";
   value: string | null;
@@ -36,10 +39,12 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
 
   const fetchContent = useCallback(async (keys: string[]) => {
     try {
-      const response = await fetch(`/api/content?keys=${keys.join(",")}&mode=${mode}`);
+      const response = await fetch(`${API_BASE}/api/content?keys=${keys.join(",")}&mode=${mode}`);
       if (response.ok) {
         const data = await response.json();
-        setContent(data);
+        setContent((prev) => ({ ...prev, ...data }));
+      } else {
+        console.error("Error fetching content:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Error fetching content:", error);
@@ -47,43 +52,35 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
   }, [mode]);
 
   const saveContent = useCallback(async (key: string, type: string, value: string) => {
-    try {
-      const response = await fetch(`/api/content/${key}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, value }),
-      });
-      if (response.ok) {
-        // Update local cache
-        setContent((prev) => ({
-          ...prev,
-          [key]: { type: type as any, value },
-        }));
-      }
-    } catch (error) {
-      console.error("Error saving content:", error);
+    const response = await fetch(`${API_BASE}/api/content/${key}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, value }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save: ${response.statusText}`);
     }
+    // Update local cache
+    setContent((prev) => ({
+      ...prev,
+      [key]: { type: type as any, value },
+    }));
   }, []);
 
   const publishContent = useCallback(async (key: string, value?: string) => {
-    try {
-      const response = await fetch(`/api/content/${key}/publish`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ value }),
-      });
-      if (response.ok) {
-        // Refresh content
-        await fetchContent([key]);
-      }
-    } catch (error) {
-      console.error("Error publishing content:", error);
+    const response = await fetch(`${API_BASE}/api/content/${key}/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ value }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to publish: ${response.statusText}`);
     }
-  }, [fetchContent]);
+  }, []);
 
   const getRevisions = useCallback(async (key: string) => {
     try {
-      const response = await fetch(`/api/content/${key}/revisions?limit=20`);
+      const response = await fetch(`${API_BASE}/api/content/${key}/revisions?limit=20`);
       if (response.ok) {
         return await response.json();
       }
@@ -95,20 +92,15 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
   }, []);
 
   const restoreRevision = useCallback(async (key: string, revisionId: string, targetMode: string) => {
-    try {
-      const response = await fetch(`/api/content/${key}/restore/${revisionId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_mode: targetMode }),
-      });
-      if (response.ok) {
-        // Refresh content
-        await fetchContent([key]);
-      }
-    } catch (error) {
-      console.error("Error restoring revision:", error);
+    const response = await fetch(`${API_BASE}/api/content/${key}/restore/${revisionId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_mode: targetMode }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to restore: ${response.statusText}`);
     }
-  }, [fetchContent]);
+  }, []);
 
   const value: ContentContextType = {
     content,

@@ -17,6 +17,7 @@ export default function App() {
     const path = window.location.pathname;
     return path.startsWith("/admin") ? "admin" : path === "/" ? "home" : path;
   });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const content = useContent();
 
@@ -34,6 +35,7 @@ export default function App() {
   const navigate = (path: string) => {
     window.history.pushState({}, "", path);
     setCurrentPage(path);
+    setMenuOpen(false);
   };
 
   const renderPage = () => {
@@ -71,10 +73,18 @@ export default function App() {
 
       <header className="header">
         <nav className="nav">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }} className="nav-brand">
             <strong>Micro CMS</strong>
           </a>
-          <div className="nav-links">
+          <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+            {menuOpen ? "✕" : "☰"}
+          </button>
+          {content.mode === "published" && (
+            <button className="draft-toggle" onClick={() => content.setMode("draft")}>
+              📝 Draft
+            </button>
+          )}
+          <div className={`nav-links ${menuOpen ? "open" : ""}`}>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
               Home
             </a>
@@ -88,11 +98,6 @@ export default function App() {
               Admin
             </a>
           </div>
-          {content.mode === "published" && (
-            <button className="draft-toggle" onClick={() => content.setMode("draft")}>
-              📝 Preview Draft
-            </button>
-          )}
         </nav>
       </header>
 

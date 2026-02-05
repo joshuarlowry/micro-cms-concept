@@ -55,20 +55,21 @@ def get_revisions(key: str, limit: int = Query(20, le=100)):
     """Get revision history for a content key"""
     with get_db_session() as db:
         revisions = crud.get_revisions(db, key, limit)
-
-    return [
-        {
-            "id": r.id,
-            "key": r.key,
-            "mode": r.mode.value,
-            "type": r.type.value,
-            "value": r.value[:200] + "..." if len(r.value) > 200 else r.value,
-            "full_value": r.value,
-            "created_at": r.created_at,
-            "created_by": r.created_by,
-        }
-        for r in revisions
-    ]
+        # Serialize within the session context to avoid DetachedInstanceError
+        result = [
+            {
+                "id": r.id,
+                "key": r.key,
+                "mode": r.mode.value,
+                "type": r.type.value,
+                "value": r.value[:200] + "..." if len(r.value) > 200 else r.value,
+                "full_value": r.value,
+                "created_at": r.created_at,
+                "created_by": r.created_by,
+            }
+            for r in revisions
+        ]
+    return result
 
 @router.post("/{key}/restore/{revision_id}")
 def restore(key: str, revision_id: str, request: RestoreRequest):

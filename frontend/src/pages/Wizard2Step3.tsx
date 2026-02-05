@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 export default function Wizard2Step3() {
   const { content, fetchContent, mode } = useContent();
   const [completed, setCompleted] = useState(false);
@@ -32,7 +34,7 @@ export default function Wizard2Step3() {
       const step2 = JSON.parse(sessionStorage.getItem("wizard2_step2") || "{}");
       const wizardData = { ...step1, ...step2, ...validationResults };
 
-      const response = await fetch("/api/wizards/runs", {
+      const response = await fetch(`${API_BASE}/api/wizards/runs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

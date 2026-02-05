@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 export default function Wizard1Step3() {
   const { content, fetchContent, mode } = useContent();
   const [completed, setCompleted] = useState(false);
@@ -28,7 +30,7 @@ export default function Wizard1Step3() {
 
   const handleConfirm = async () => {
     try {
-      const response = await fetch("/api/wizards/runs", {
+      const response = await fetch(`${API_BASE}/api/wizards/runs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -50,6 +52,25 @@ export default function Wizard1Step3() {
     window.location.pathname = "/wizard/secure-access/step-2";
   };
 
+  const renderProgress = () => (
+    <div className="wizard-progress">
+      <div className="step">
+        <div className="indicator">1</div>
+        <span>Recovery</span>
+      </div>
+      <div className="connector" />
+      <div className="step">
+        <div className="indicator">2</div>
+        <span>2FA</span>
+      </div>
+      <div className="connector" />
+      <div className="step active">
+        <div className="indicator">3</div>
+        <span>Review</span>
+      </div>
+    </div>
+  );
+
   if (completed) {
     const successTitle = content["wizard.secure_access_setup.step.3.success.title"]?.value || "✅ Complete!";
     const successBody = content["wizard.secure_access_setup.step.3.success.body_md"]?.value || "";
@@ -57,25 +78,12 @@ export default function Wizard1Step3() {
     return (
       <div className="wizard-container">
         <div className="wizard-header">
-          <div className="wizard-progress">
-            <div className="step">
-              <div className="indicator">1</div>
-              <span>Recovery Method</span>
-            </div>
-            <div className="step">
-              <div className="indicator">2</div>
-              <span>2FA</span>
-            </div>
-            <div className="step active">
-              <div className="indicator">3</div>
-              <span>Review</span>
-            </div>
-          </div>
+          {renderProgress()}
         </div>
 
         <div className="wizard-success">
           <h2>{successTitle}</h2>
-          <div style={{ maxWidth: "500px", margin: "0 auto" }}>
+          <div style={{ maxWidth: "500px", margin: "0 auto", textAlign: "left" }}>
             <MarkdownRenderer content={successBody} />
           </div>
         </div>
@@ -92,20 +100,7 @@ export default function Wizard1Step3() {
   return (
     <div className="wizard-container">
       <div className="wizard-header">
-        <div className="wizard-progress">
-          <div className="step">
-            <div className="indicator">1</div>
-            <span>Recovery Method</span>
-          </div>
-          <div className="step">
-            <div className="indicator">2</div>
-            <span>2FA</span>
-          </div>
-          <div className="step active">
-            <div className="indicator">3</div>
-            <span>Review</span>
-          </div>
-        </div>
+        {renderProgress()}
         <h2>{title}</h2>
       </div>
 
@@ -115,27 +110,27 @@ export default function Wizard1Step3() {
         <div className="wizard-summary">
           <h4>Security Settings Summary</h4>
           <div className="wizard-summary-item">
-            <span className="label">Recovery Method:</span>
-            <span className="value">{wizardData.recovery_method || "Not set"}</span>
+            <span className="label">Recovery Method</span>
+            <span className="value">{wizardData.recovery_method === "email" ? "Email" : wizardData.recovery_method === "security_question" ? "Security Question" : "Not set"}</span>
           </div>
           <div className="wizard-summary-item">
-            <span className="label">Two-Factor Method:</span>
-            <span className="value">{wizardData.two_factor_method || "Not set"}</span>
+            <span className="label">Two-Factor Method</span>
+            <span className="value">{wizardData.two_factor_method === "auth_app" ? "Authenticator App" : wizardData.two_factor_method === "sms" ? "SMS" : "Not set"}</span>
           </div>
         </div>
 
         {confirmation && (
-          <div style={{ backgroundColor: "#d4edda", border: "1px solid #28a745", borderRadius: "4px", padding: "15px", marginTop: "20px" }}>
+          <div className="callout" style={{ backgroundColor: "#d4edda", border: "1px solid #28a745" }}>
             <MarkdownRenderer content={confirmation} />
           </div>
         )}
       </div>
 
       <div className="wizard-footer">
-        <button className="secondary" onClick={handleBack}>
+        <button className="secondary" onClick={handleBack} style={{ flex: 1, maxWidth: "200px" }}>
           {backLabel}
         </button>
-        <button className="primary" onClick={handleConfirm}>
+        <button className="primary" onClick={handleConfirm} style={{ flex: 1, maxWidth: "200px" }}>
           {confirmLabel}
         </button>
       </div>

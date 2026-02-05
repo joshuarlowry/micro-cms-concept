@@ -44,12 +44,14 @@ export default function Wizard1Step2() {
         <div className="wizard-progress">
           <div className="step">
             <div className="indicator">1</div>
-            <span>Recovery Method</span>
+            <span>Recovery</span>
           </div>
+          <div className="connector" />
           <div className="step active">
             <div className="indicator">2</div>
             <span>2FA</span>
           </div>
+          <div className="connector" />
           <div className="step">
             <div className="indicator">3</div>
             <span>Review</span>
@@ -62,14 +64,14 @@ export default function Wizard1Step2() {
         <MarkdownRenderer content={intro} />
 
         {options && (
-          <div style={{ marginTop: "20px", backgroundColor: "#f0f8ff", border: "1px solid #0066cc", borderRadius: "4px", padding: "15px" }}>
+          <div className="callout info" style={{ marginTop: "16px" }}>
             <MarkdownRenderer content={options} />
           </div>
         )}
 
         <div className="form-group" style={{ marginTop: "20px" }}>
           <div className="radio-group">
-            <div className="radio-item">
+            <label className="radio-item" htmlFor="auth-app">
               <input
                 type="radio"
                 id="auth-app"
@@ -78,14 +80,14 @@ export default function Wizard1Step2() {
                 checked={twoFactorMethod === "auth_app"}
                 onChange={(e) => setTwoFactorMethod(e.target.value)}
               />
-              <label htmlFor="auth-app">
+              <div>
                 <strong>Authenticator App</strong>
-                <p style={{ margin: "5px 0 0 0", fontSize: "0.9em", color: "#666" }}>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.9em", color: "#666" }}>
                   Use an app like Google Authenticator (recommended)
                 </p>
-              </label>
-            </div>
-            <div className="radio-item">
+              </div>
+            </label>
+            <label className="radio-item" htmlFor="sms">
               <input
                 type="radio"
                 id="sms"
@@ -94,28 +96,28 @@ export default function Wizard1Step2() {
                 checked={twoFactorMethod === "sms"}
                 onChange={(e) => setTwoFactorMethod(e.target.value)}
               />
-              <label htmlFor="sms">
+              <div>
                 <strong>SMS</strong>
-                <p style={{ margin: "5px 0 0 0", fontSize: "0.9em", color: "#666" }}>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.9em", color: "#666" }}>
                   Receive codes via text message
                 </p>
-              </label>
-            </div>
+              </div>
+            </label>
           </div>
         </div>
 
         {caution && (
-          <div style={{ backgroundColor: "#fff3cd", border: "1px solid #ffc107", borderRadius: "4px", padding: "15px", marginTop: "20px" }}>
+          <div className="callout warning">
             <MarkdownRenderer content={caution} />
           </div>
         )}
       </div>
 
       <div className="wizard-footer">
-        <button className="secondary" onClick={handleBack}>
+        <button className="secondary" onClick={handleBack} style={{ flex: 1, maxWidth: "200px" }}>
           {backLabel}
         </button>
-        <button className="primary" onClick={handleNext} disabled={!twoFactorMethod}>
+        <button className="primary" onClick={handleNext} disabled={!twoFactorMethod} style={{ flex: 1, maxWidth: "200px" }}>
           {nextLabel}
         </button>
       </div>

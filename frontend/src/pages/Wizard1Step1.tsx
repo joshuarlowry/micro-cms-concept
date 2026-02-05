@@ -40,12 +40,14 @@ export default function Wizard1Step1() {
         <div className="wizard-progress">
           <div className="step active">
             <div className="indicator">1</div>
-            <span>Recovery Method</span>
+            <span>Recovery</span>
           </div>
+          <div className="connector" />
           <div className="step">
             <div className="indicator">2</div>
             <span>2FA</span>
           </div>
+          <div className="connector" />
           <div className="step">
             <div className="indicator">3</div>
             <span>Review</span>
@@ -60,7 +62,7 @@ export default function Wizard1Step1() {
 
         <div className="form-group" style={{ marginTop: "20px" }}>
           <div className="radio-group">
-            <div className="radio-item">
+            <label className="radio-item" htmlFor="email">
               <input
                 type="radio"
                 id="email"
@@ -69,14 +71,14 @@ export default function Wizard1Step1() {
                 checked={recoveryMethod === "email"}
                 onChange={(e) => setRecoveryMethod(e.target.value)}
               />
-              <label htmlFor="email">
+              <div>
                 <strong>Email Address</strong>
-                <p style={{ margin: "5px 0 0 0", fontSize: "0.9em", color: "#666" }}>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.9em", color: "#666" }}>
                   Receive recovery codes via email
                 </p>
-              </label>
-            </div>
-            <div className="radio-item">
+              </div>
+            </label>
+            <label className="radio-item" htmlFor="security-question">
               <input
                 type="radio"
                 id="security-question"
@@ -85,28 +87,28 @@ export default function Wizard1Step1() {
                 checked={recoveryMethod === "security_question"}
                 onChange={(e) => setRecoveryMethod(e.target.value)}
               />
-              <label htmlFor="security-question">
+              <div>
                 <strong>Security Question</strong>
-                <p style={{ margin: "5px 0 0 0", fontSize: "0.9em", color: "#666" }}>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.9em", color: "#666" }}>
                   Answer a security question you create
                 </p>
-              </label>
-            </div>
+              </div>
+            </label>
           </div>
         </div>
 
         {note && (
-          <div style={{ backgroundColor: "#fffbea", border: "1px solid #f1c232", borderRadius: "4px", padding: "15px", marginTop: "20px" }}>
+          <div className="callout note">
             <MarkdownRenderer content={note} />
           </div>
         )}
       </div>
 
       <div className="wizard-footer">
-        <a href="/" onClick={(e) => { e.preventDefault(); window.location.pathname = "/"; }}>
-          <button className="secondary">{backLabel}</button>
+        <a href="/" onClick={(e) => { e.preventDefault(); window.location.pathname = "/"; }} style={{ flex: 1, maxWidth: "200px" }}>
+          <button className="secondary" style={{ width: "100%" }}>{backLabel}</button>
         </a>
-        <button className="primary" onClick={handleNext} disabled={!recoveryMethod}>
+        <button className="primary" onClick={handleNext} disabled={!recoveryMethod} style={{ flex: 1, maxWidth: "200px" }}>
           {nextLabel}
         </button>
       </div>
