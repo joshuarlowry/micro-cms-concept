@@ -137,6 +137,7 @@ def create_wizard_run(db: Session, wizard_id: str, step: str, data: str = None, 
     )
     db.add(run)
     db.commit()
+    db.refresh(run)
     return run
 
 def update_wizard_run(db: Session, run_id: str, step: str = None, data: str = None, completed: bool = None):
@@ -154,6 +155,7 @@ def update_wizard_run(db: Session, run_id: str, step: str = None, data: str = No
 
     run.updated_at = datetime.utcnow()
     db.commit()
+    db.refresh(run)
     return run
 
 def get_wizard_runs(db: Session, wizard_id: str, limit: int = 50):
