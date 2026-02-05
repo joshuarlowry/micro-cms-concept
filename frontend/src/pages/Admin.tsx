@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
 import {
   ContentSelector,
@@ -142,8 +142,9 @@ export default function Admin() {
 
   // Auto-select section if only one exists
   useEffect(() => {
-    if (selectedCategory && sections.length === 1 && !selectedSection) {
-      setSelectedSection(sections[0]);
+    const firstSection = sections[0];
+    if (selectedCategory && sections.length === 1 && !selectedSection && firstSection) {
+      setSelectedSection(firstSection);
     }
   }, [selectedCategory, sections, selectedSection]);
 

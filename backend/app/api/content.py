@@ -1,3 +1,4 @@
+from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from app.database import get_db_session
 from app.schemas import (
@@ -13,7 +14,7 @@ from app import crud
 router = APIRouter()
 
 @router.get("")
-def get_content_batch(keys: str = Query(...), mode: str = Query("published")):
+def get_content_batch(keys: str = Query(...), mode: str = Query("published")) -> dict[str, dict[str, Any]]:
     """Get multiple content entries at once.
 
     Args:
@@ -28,7 +29,7 @@ def get_content_batch(keys: str = Query(...), mode: str = Query("published")):
     return content
 
 @router.put("/{key}")
-def save_draft(key: str, content: ContentUpdate):
+def save_draft(key: str, content: ContentUpdate) -> dict[str, str]:
     """Save a draft version of content"""
     try:
         with get_db_session() as db:
@@ -39,7 +40,7 @@ def save_draft(key: str, content: ContentUpdate):
     return {"status": "draft saved", "key": key}
 
 @router.post("/{key}/publish")
-def publish(key: str, request: PublishRequest = None):
+def publish(key: str, request: PublishRequest | None = None) -> dict[str, str]:
     """Publish content"""
     try:
         with get_db_session() as db:
@@ -51,7 +52,7 @@ def publish(key: str, request: PublishRequest = None):
     return {"status": "published", "key": key}
 
 @router.get("/{key}/revisions")
-def get_revisions(key: str, limit: int = Query(20, le=100)):
+def get_revisions(key: str, limit: int = Query(20, le=100)) -> list[dict[str, Any]]:
     """Get revision history for a content key"""
     with get_db_session() as db:
         revisions = crud.get_revisions(db, key, limit)
@@ -72,7 +73,7 @@ def get_revisions(key: str, limit: int = Query(20, le=100)):
     return result
 
 @router.post("/{key}/restore/{revision_id}")
-def restore(key: str, revision_id: str, request: RestoreRequest):
+def restore(key: str, revision_id: str, request: RestoreRequest) -> dict[str, str]:
     """Restore a previous revision"""
     try:
         with get_db_session() as db:

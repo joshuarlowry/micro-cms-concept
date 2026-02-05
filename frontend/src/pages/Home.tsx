@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useContent } from "../hooks/useContent";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
@@ -25,8 +25,10 @@ export default function Home() {
   const heroTitle = content["home.hero.title"]?.value || "Welcome to Micro CMS";
   const heroSubtitle = content["home.hero.subtitle"]?.value || "A powerful content management system";
   const heroBody = content["home.hero.body_md"]?.value || "";
-  const ctaLabel = content["home.cta.label"]?.value || "Get Started";
-  const ctaHref = content["home.cta.href"]?.value || "/";
+  // CTA values fetched for future use
+  const _ctaLabel = content["home.cta.label"]?.value || "Get Started";
+  const _ctaHref = content["home.cta.href"]?.value || "/";
+  void _ctaLabel; void _ctaHref; // Suppress unused warnings
   const wizardsSectionTitle = content["home.wizards.section_title"]?.value || "Try Our Wizards";
   const wizard1Label = content["home.wizards.wizard1.label"]?.value || "Secure Access Setup";
   const wizard1Href = content["home.wizards.wizard1.href"]?.value || "/wizard/secure-access/step-1";

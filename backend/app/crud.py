@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import Any
 from sqlalchemy.orm import Session
 from app.models import ContentEntry, ContentRevision, WizardRun, RevisionModeEnum, ContentTypeEnum
 from app.schemas import ContentCreate, ContentUpdate
 
-def get_content(db: Session, key: str, mode: str = "published"):
+def get_content(db: Session, key: str, mode: str = "published") -> dict[str, Any] | None:
     """Get content by key, returning draft if mode=draft and draft exists, else published"""
     entry = db.query(ContentEntry).filter(ContentEntry.key == key).first()
     if not entry:
@@ -16,16 +17,16 @@ def get_content(db: Session, key: str, mode: str = "published"):
     else:
         return {"type": entry.type, "value": None}
 
-def get_content_batch(db: Session, keys: list, mode: str = "published"):
+def get_content_batch(db: Session, keys: list[str], mode: str = "published") -> dict[str, dict[str, Any]]:
     """Get multiple content entries at once"""
-    result = {}
+    result: dict[str, dict[str, Any]] = {}
     for key in keys:
         content = get_content(db, key, mode)
         if content:
             result[key] = content
     return result
 
-def save_draft(db: Session, key: str, content_type: str, value: str):
+def save_draft(db: Session, key: str, content_type: str, value: str) -> ContentEntry:
     """Save a draft version of content"""
     entry = db.query(ContentEntry).filter(ContentEntry.key == key).first()
     if not entry:
@@ -49,7 +50,7 @@ def save_draft(db: Session, key: str, content_type: str, value: str):
 
     return entry
 
-def publish_content(db: Session, key: str, value: str = None):
+def publish_content(db: Session, key: str, value: str | None = None) -> ContentEntry:
     """Publish content from draft or use provided value"""
     entry = db.query(ContentEntry).filter(ContentEntry.key == key).first()
     if not entry:
@@ -78,9 +79,9 @@ def publish_content(db: Session, key: str, value: str = None):
 
     return entry
 
-def get_revisions(db: Session, key: str, limit: int = 20):
+def get_revisions(db: Session, key: str, limit: int = 20) -> list[ContentRevision]:
     """Get revision history for a content key"""
-    revisions = (
+    revisions: list[ContentRevision] = (
         db.query(ContentRevision)
         .filter(ContentRevision.key == key)
         .order_by(ContentRevision.created_at.desc())
@@ -89,7 +90,7 @@ def get_revisions(db: Session, key: str, limit: int = 20):
     )
     return revisions
 
-def restore_revision(db: Session, key: str, revision_id: str, target_mode: str):
+def restore_revision(db: Session, key: str, revision_id: str, target_mode: str) -> ContentEntry:
     """Restore a previous revision"""
     # Get the revision to restore
     revision = db.query(ContentRevision).filter(
@@ -127,7 +128,7 @@ def restore_revision(db: Session, key: str, revision_id: str, target_mode: str):
 
     return entry
 
-def create_wizard_run(db: Session, wizard_id: str, step: str, data: str = None, completed: bool = False):
+def create_wizard_run(db: Session, wizard_id: str, step: str, data: str | None = None, completed: bool = False) -> WizardRun:
     """Create a wizard run record"""
     run = WizardRun(
         wizard_id=wizard_id,
@@ -140,7 +141,7 @@ def create_wizard_run(db: Session, wizard_id: str, step: str, data: str = None, 
     db.refresh(run)
     return run
 
-def update_wizard_run(db: Session, run_id: str, step: str = None, data: str = None, completed: bool = None):
+def update_wizard_run(db: Session, run_id: str, step: str | None = None, data: str | None = None, completed: bool | None = None) -> WizardRun:
     """Update a wizard run record"""
     run = db.query(WizardRun).filter(WizardRun.id == run_id).first()
     if not run:
@@ -158,9 +159,9 @@ def update_wizard_run(db: Session, run_id: str, step: str = None, data: str = No
     db.refresh(run)
     return run
 
-def get_wizard_runs(db: Session, wizard_id: str, limit: int = 50):
+def get_wizard_runs(db: Session, wizard_id: str, limit: int = 50) -> list[WizardRun]:
     """Get wizard run records"""
-    runs = (
+    runs: list[WizardRun] = (
         db.query(WizardRun)
         .filter(WizardRun.wizard_id == wizard_id)
         .order_by(WizardRun.created_at.desc())

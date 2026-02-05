@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 

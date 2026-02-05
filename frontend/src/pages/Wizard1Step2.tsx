@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
@@ -21,7 +21,6 @@ export default function Wizard1Step2() {
 
   const handleNext = () => {
     if (twoFactorMethod) {
-      const step1Data = JSON.parse(sessionStorage.getItem("wizard1_step1") || "{}");
       sessionStorage.setItem("wizard1_step2", JSON.stringify({ two_factor_method: twoFactorMethod }));
       window.location.pathname = "/wizard/secure-access/step-3";
     }

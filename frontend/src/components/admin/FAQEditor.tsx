@@ -1,4 +1,4 @@
-import React from "react";
+import type { FC, CSSProperties } from "react";
 
 export interface FAQItem {
   question: string;
@@ -10,11 +10,14 @@ interface FAQEditorProps {
   onChange: (items: FAQItem[]) => void;
 }
 
-export const FAQEditor: React.FC<FAQEditorProps> = ({ items, onChange }) => {
+export const FAQEditor: FC<FAQEditorProps> = ({ items, onChange }) => {
   const updateItem = (index: number, field: "question" | "answer_md", value: string) => {
     const updated = [...items];
-    updated[index] = { ...updated[index], [field]: value };
-    onChange(updated);
+    const existing = updated[index];
+    if (existing) {
+      updated[index] = { ...existing, [field]: value };
+      onChange(updated);
+    }
   };
 
   const addItem = () => {
@@ -30,11 +33,16 @@ export const FAQEditor: React.FC<FAQEditorProps> = ({ items, onChange }) => {
     if (direction === "down" && index === items.length - 1) return;
     const updated = [...items];
     const newIndex = direction === "up" ? index - 1 : index + 1;
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-    onChange(updated);
+    const currentItem = updated[index];
+    const swapItem = updated[newIndex];
+    if (currentItem && swapItem) {
+      updated[index] = swapItem;
+      updated[newIndex] = currentItem;
+      onChange(updated);
+    }
   };
 
-  const buttonStyle: React.CSSProperties = {
+  const buttonStyle: CSSProperties = {
     padding: "4px 8px",
     fontSize: "14px",
     border: "1px solid #ddd",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useContent } from "./hooks/useContent";
 import Home from "./pages/Home";
 import FAQ from "./pages/FAQ";

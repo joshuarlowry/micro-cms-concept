@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useContent } from "../hooks/useContent";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
 export default function Wizard2Step2() {
   const { content, fetchContent, mode } = useContent();
-  const [columnsMapped, setColumnsMapped] = useState(false);
   const [mappings, setMappings] = useState({
     full_name: "Name",
     email_address: "Email",

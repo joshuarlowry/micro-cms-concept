@@ -1,13 +1,14 @@
+from datetime import datetime
+from typing import Any
 from fastapi import APIRouter, HTTPException
 from app.database import get_db_session
 from app.schemas import WizardRunCreate, WizardRunSchema
 from app import crud
-import json
 
 router = APIRouter()
 
 @router.post("/runs")
-def create_wizard_run(run: WizardRunCreate):
+def create_wizard_run(run: WizardRunCreate) -> dict[str, str | bool | datetime | None]:
     """Create a new wizard run"""
     with get_db_session() as db:
         created_run = crud.create_wizard_run(
@@ -27,7 +28,7 @@ def create_wizard_run(run: WizardRunCreate):
         }
 
 @router.put("/runs/{run_id}")
-def update_wizard_run(run_id: str, run: WizardRunCreate):
+def update_wizard_run(run_id: str, run: WizardRunCreate) -> dict[str, str | bool | datetime | None]:
     """Update a wizard run"""
     try:
         with get_db_session() as db:
@@ -50,7 +51,7 @@ def update_wizard_run(run_id: str, run: WizardRunCreate):
         raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/runs/{wizard_id}")
-def get_wizard_runs(wizard_id: str, limit: int = 50):
+def get_wizard_runs(wizard_id: str, limit: int = 50) -> list[dict[str, str | bool | datetime | None]]:
     """Get wizard run records"""
     with get_db_session() as db:
         runs = crud.get_wizard_runs(db, wizard_id, limit)
