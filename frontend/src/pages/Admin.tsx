@@ -32,70 +32,80 @@ export default function Admin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorTab, setEditorTab] = useState<"edit" | "preview">("edit");
 
-  useEffect(() => {
-    // Fetch all known content keys
-    const allKeys = [
-      // Home
-      "home.hero.title",
-      "home.hero.subtitle",
-      "home.hero.body_md",
-      "home.cta.label",
-      "home.cta.href",
-      // FAQ
-      "faq.items",
-      // About
-      "about.page.body_md",
-      // Wizard 1
-      "wizard.secure_access_setup.step.1.header.title",
-      "wizard.secure_access_setup.step.1.header.subtitle",
-      "wizard.secure_access_setup.step.1.body.intro_md",
-      "wizard.secure_access_setup.step.1.callout.note_md",
-      "wizard.secure_access_setup.step.1.footer.next_label",
-      "wizard.secure_access_setup.step.1.footer.back_label",
-      "wizard.secure_access_setup.step.2.header.title",
-      "wizard.secure_access_setup.step.2.body.intro_md",
-      "wizard.secure_access_setup.step.2.body.options_help_md",
-      "wizard.secure_access_setup.step.2.callout.caution_md",
-      "wizard.secure_access_setup.step.2.footer.next_label",
-      "wizard.secure_access_setup.step.2.footer.back_label",
-      "wizard.secure_access_setup.step.3.header.title",
-      "wizard.secure_access_setup.step.3.body.review_intro_md",
-      "wizard.secure_access_setup.step.3.callout.confirmation_md",
-      "wizard.secure_access_setup.step.3.footer.confirm_label",
-      "wizard.secure_access_setup.step.3.footer.back_label",
-      "wizard.secure_access_setup.step.3.success.title",
-      "wizard.secure_access_setup.step.3.success.body_md",
-      // Wizard 2
-      "wizard.data_import_quickstart.step.1.header.title",
-      "wizard.data_import_quickstart.step.1.body.intro_md",
-      "wizard.data_import_quickstart.step.1.body.constraints_md",
-      "wizard.data_import_quickstart.step.1.footer.next_label",
-      "wizard.data_import_quickstart.step.1.footer.back_label",
-      "wizard.data_import_quickstart.step.2.header.title",
-      "wizard.data_import_quickstart.step.2.body.intro_md",
-      "wizard.data_import_quickstart.step.2.body.example_md",
-      "wizard.data_import_quickstart.step.2.callout.tip_md",
-      "wizard.data_import_quickstart.step.2.footer.next_label",
-      "wizard.data_import_quickstart.step.2.footer.back_label",
-      "wizard.data_import_quickstart.step.3.header.title",
-      "wizard.data_import_quickstart.step.3.body.validation_intro_md",
-      "wizard.data_import_quickstart.step.3.callout.common_errors_md",
-      "wizard.data_import_quickstart.step.3.footer.import_label",
-      "wizard.data_import_quickstart.step.3.footer.back_label",
-      "wizard.data_import_quickstart.step.3.success.title",
-      "wizard.data_import_quickstart.step.3.success.body_md",
-    ];
+  // Helper to infer type from key name
+  const inferType = (key: string): string => {
+    if (key.endsWith("_md")) return "markdown";
+    if (key === "faq.items") return "rich_json";
+    return "plain";
+  };
 
-    contentContext.fetchContent(allKeys).then(() => {
-      const content = allKeys.map((key) => ({
-        key,
-        type: contentContext.content[key]?.type || "plain",
-        current_draft: contentContext.content[key]?.value || undefined,
-        current_published: contentContext.content[key]?.value || undefined,
-      }));
-      setAllContent(content);
-    });
+  // All known content keys
+  const allKeys = [
+    // Home
+    "home.hero.title",
+    "home.hero.subtitle",
+    "home.hero.body_md",
+    "home.cta.label",
+    "home.cta.href",
+    // FAQ
+    "faq.items",
+    // About
+    "about.page.body_md",
+    // Wizard 1: Secure Access Setup
+    "wizard.secure_access_setup.step.1.header.title",
+    "wizard.secure_access_setup.step.1.header.subtitle",
+    "wizard.secure_access_setup.step.1.body.intro_md",
+    "wizard.secure_access_setup.step.1.callout.note_md",
+    "wizard.secure_access_setup.step.1.footer.next_label",
+    "wizard.secure_access_setup.step.1.footer.back_label",
+    "wizard.secure_access_setup.step.2.header.title",
+    "wizard.secure_access_setup.step.2.body.intro_md",
+    "wizard.secure_access_setup.step.2.body.options_help_md",
+    "wizard.secure_access_setup.step.2.callout.caution_md",
+    "wizard.secure_access_setup.step.2.footer.next_label",
+    "wizard.secure_access_setup.step.2.footer.back_label",
+    "wizard.secure_access_setup.step.3.header.title",
+    "wizard.secure_access_setup.step.3.body.review_intro_md",
+    "wizard.secure_access_setup.step.3.callout.confirmation_md",
+    "wizard.secure_access_setup.step.3.footer.confirm_label",
+    "wizard.secure_access_setup.step.3.footer.back_label",
+    "wizard.secure_access_setup.step.3.success.title",
+    "wizard.secure_access_setup.step.3.success.body_md",
+    // Wizard 2: Data Import Quickstart
+    "wizard.data_import_quickstart.step.1.header.title",
+    "wizard.data_import_quickstart.step.1.body.intro_md",
+    "wizard.data_import_quickstart.step.1.body.constraints_md",
+    "wizard.data_import_quickstart.step.1.footer.next_label",
+    "wizard.data_import_quickstart.step.1.footer.back_label",
+    "wizard.data_import_quickstart.step.2.header.title",
+    "wizard.data_import_quickstart.step.2.body.intro_md",
+    "wizard.data_import_quickstart.step.2.body.example_md",
+    "wizard.data_import_quickstart.step.2.callout.tip_md",
+    "wizard.data_import_quickstart.step.2.footer.next_label",
+    "wizard.data_import_quickstart.step.2.footer.back_label",
+    "wizard.data_import_quickstart.step.3.header.title",
+    "wizard.data_import_quickstart.step.3.body.validation_intro_md",
+    "wizard.data_import_quickstart.step.3.callout.common_errors_md",
+    "wizard.data_import_quickstart.step.3.footer.import_label",
+    "wizard.data_import_quickstart.step.3.footer.back_label",
+    "wizard.data_import_quickstart.step.3.success.title",
+    "wizard.data_import_quickstart.step.3.success.body_md",
+  ];
+
+  useEffect(() => {
+    contentContext.fetchContent(allKeys);
   }, []);
+
+  // Update allContent when contentContext.content changes
+  useEffect(() => {
+    const content = allKeys.map((key) => ({
+      key,
+      type: contentContext.content[key]?.type || inferType(key),
+      current_draft: contentContext.content[key]?.value || undefined,
+      current_published: contentContext.content[key]?.value || undefined,
+    }));
+    setAllContent(content);
+  }, [contentContext.content]);
 
   const filteredContent = allContent.filter((item) =>
     item.key.toLowerCase().includes(filter.toLowerCase())
@@ -248,12 +258,31 @@ export default function Admin() {
 
               <div className="editor-section" style={{ marginTop: "16px" }}>
                 {selected.type === "plain" ? (
-                  <input
-                    type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    placeholder="Enter plain text"
-                  />
+                  <div>
+                    <label style={{ 
+                      fontWeight: "500", 
+                      display: "block", 
+                      marginBottom: "8px", 
+                      fontSize: "0.9em",
+                      color: "#555"
+                    }}>
+                      Plain Text (single line)
+                    </label>
+                    <input
+                      type="text"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder="Enter plain text value..."
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        fontSize: "16px",
+                        border: "2px solid #ddd",
+                        borderRadius: "6px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
                 ) : selected.type === "markdown" ? (
                   <div>
                     {/* Tabs for mobile */}
@@ -275,14 +304,23 @@ export default function Admin() {
                     {/* Split view for desktop, tabs for mobile */}
                     <div className="editor-split">
                       <div className={`editor-pane ${editorTab === "edit" ? "active" : ""}`}>
-                        <label style={{ fontWeight: "500", display: "block", marginBottom: "8px", fontSize: "0.9em" }}>
-                          Markdown Editor
+                        <label style={{ fontWeight: "500", display: "block", marginBottom: "8px", fontSize: "0.9em", color: "#555" }}>
+                          Markdown (multiline)
                         </label>
                         <textarea
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          placeholder="Enter markdown..."
-                          style={{ width: "100%", minHeight: "250px", fontFamily: "monospace", fontSize: "14px" }}
+                          placeholder="Enter markdown content..."
+                          style={{ 
+                            width: "100%", 
+                            minHeight: "250px", 
+                            fontFamily: "monospace", 
+                            fontSize: "14px",
+                            padding: "12px",
+                            border: "2px solid #ddd",
+                            borderRadius: "6px",
+                            boxSizing: "border-box",
+                          }}
                         />
                       </div>
                       <div className={`editor-pane ${editorTab === "preview" ? "active" : ""}`}>
@@ -303,12 +341,32 @@ export default function Admin() {
                     </div>
                   </div>
                 ) : (
-                  <textarea
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    placeholder="Enter JSON"
-                    style={{ width: "100%", minHeight: "200px", fontFamily: "monospace", fontSize: "14px" }}
-                  />
+                  <div>
+                    <label style={{ 
+                      fontWeight: "500", 
+                      display: "block", 
+                      marginBottom: "8px", 
+                      fontSize: "0.9em",
+                      color: "#555"
+                    }}>
+                      JSON (structured data)
+                    </label>
+                    <textarea
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      placeholder='Enter JSON, e.g. [{"q": "Question?", "a": "Answer"}]'
+                      style={{ 
+                        width: "100%", 
+                        minHeight: "200px", 
+                        fontFamily: "monospace", 
+                        fontSize: "14px",
+                        padding: "12px",
+                        border: "2px solid #ddd",
+                        borderRadius: "6px",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
                 )}
 
                 <div className="button-group">
