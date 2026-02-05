@@ -216,7 +216,3 @@ The dual-column design (`current_draft` / `current_published`) enables:
 - **Containerization**: Docker Compose
 
 Adapt to your stack. The pattern works with any language/framework.
-
-## License
-
-MIT - Use however you like.
