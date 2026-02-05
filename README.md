@@ -1,499 +1,222 @@
-# Micro CMS + Wizards
+# Micro CMS
 
-A complete, production-ready example of a **database-backed CMS with editable multi-step wizards**. This application demonstrates full-stack content management where all text, instructions, and labels are stored in PostgreSQL and edited through a live admin panel.
+A lightweight reference implementation for adding editable content to any application. **Change text without deployments.**
 
-**Accessed:** 2026-02-04 (America/New_York)
+## The Problem
 
-## 🎯 Key Features
+Every app has "static" content: page titles, button labels, help text, wizard instructions, FAQ items. Typically this lives in code, meaning every text change requires a developer, a PR, and a deployment.
 
-- **Database-Backed Content**: All content (pages, wizard instructions, FAQs) live in PostgreSQL
-- **Live Admin Panel** (`/admin`): Edit pages and wizard text in real-time
-- **Markdown Support**: Write formatted content with live preview via `react-md-editor`
-- **Draft Mode**: Preview unpublished changes before publishing (toggle in top-right)
-- **Revision History**: Every save creates a revision; restore any previous version
-- **Two Working Wizards**: Complete user journeys with persistent data to a `wizard_runs` table
-- **No Authentication**: Single "default" user mode (add real auth as needed)
-- **One-Command Boot**: `docker compose up --build` and you're ready
+## The Solution
 
-## 🔄 How Content Works
-
-### The Content Flow
+Add two tables to your database. Now anyone can edit content through a simple admin panel, and changes go live instantly.
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  PostgreSQL │────▶│  FastAPI    │────▶│  React      │────▶│  Page       │
-│  Database   │     │  /api/content│     │  Context    │     │  Component  │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-     ▲                                                             │
-     │                      ┌─────────────┐                        │
-     └──────────────────────│  /admin     │◀───────────────────────┘
-                            │  Panel      │   (edit & publish)
-                            └─────────────┘
+Before: "Can you change the button text?" → PR → Review → Deploy → Done (hours/days)
+After:  "Can you change the button text?" → Admin panel → Save → Done (seconds)
 ```
 
-### 1. Content is Stored in PostgreSQL
+## What You Add
 
-Each piece of content has a unique **key** (like `home.hero.title`) stored in the `content_entries` table:
+### Two Database Tables
 
-```sql
--- Example row in content_entries
-key               = 'home.hero.title'
-type              = 'plain'           -- plain | markdown | rich_json
-current_draft     = 'New Title (draft)'
-current_published = 'Welcome to Micro CMS'
+That's it. Two tables turn your static strings into editable content:
+
+**`content_entries`** - Your content storage
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `key` | `VARCHAR(255) PK` | Unique identifier (e.g., `home.hero.title`) |
+| `type` | `ENUM` | `plain`, `markdown`, or `rich_json` |
+| `current_draft` | `TEXT` | Work-in-progress value |
+| `current_published` | `TEXT` | Live value served to users |
+| `updated_at` | `TIMESTAMP` | Last modification time |
+| `updated_by` | `VARCHAR(100)` | Who made the change |
+
+**`content_revisions`** - Automatic version history
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `id` | `UUID PK` | Revision identifier |
+| `key` | `VARCHAR(255) FK` | References content_entries |
+| `mode` | `ENUM` | `draft` or `published` |
+| `type` | `ENUM` | Content type at time of save |
+| `value` | `TEXT` | The actual content |
+| `created_at` | `TIMESTAMP` | When this version was saved |
+| `created_by` | `VARCHAR(100)` | Who saved it |
+
+Every save creates a revision. You get full history and rollback for free.
+
+### Optional: Wizard Runs Table
+
+If your app has multi-step flows (onboarding, setup wizards, import processes), add a third table to track user progress:
+
+**`wizard_runs`** - Track multi-step flow completions
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `id` | `UUID PK` | Run identifier |
+| `wizard_id` | `VARCHAR(100)` | Which wizard (e.g., `onboarding`) |
+| `step` | `VARCHAR(10)` | Current step |
+| `data` | `TEXT` | JSON blob of collected data |
+| `completed` | `BOOLEAN` | Whether flow finished |
+| `created_at` | `TIMESTAMP` | When started |
+| `updated_at` | `TIMESTAMP` | Last activity |
+
+## How It Works
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Database   │────▶│     API      │────▶│   Your App   │
+│   (2 tables) │     │  /api/content│     │              │
+└──────────────┘     └──────────────┘     └──────────────┘
+       ▲                                         
+       │             ┌──────────────┐            
+       └─────────────│ Admin Panel  │            
+                     └──────────────┘            
 ```
 
-### 2. Frontend Fetches Content via API
+1. **Your app** requests content by key: `GET /api/content?keys=home.title,home.subtitle`
+2. **API returns** the published values (or drafts in preview mode)
+3. **Admin panel** lets editors change content and publish when ready
+4. **No deployment needed** - database changes are instant
 
-The React app calls the API with the keys it needs:
+## Key Naming Convention
 
-```
-GET /api/content?keys=home.hero.title,home.hero.subtitle&mode=published
-```
-
-Response:
-```json
-{
-  "home.hero.title": { "type": "plain", "value": "Welcome to Micro CMS" },
-  "home.hero.subtitle": { "type": "plain", "value": "A powerful CMS" }
-}
-```
-
-### 3. ContentContext Stores It Globally
-
-The `ContentProvider` wraps the app and provides content to all pages:
-
-```tsx
-// frontend/src/context/ContentContext.tsx
-const { content, fetchContent, mode } = useContent();
-
-// Fetch content for specific keys
-await fetchContent(["home.hero.title", "home.hero.subtitle"]);
-
-// Access the values
-const title = content["home.hero.title"]?.value || "Default Title";
-```
-
-### 4. Pages Display the Content
-
-Each page component fetches its required keys and renders them:
-
-```tsx
-// frontend/src/pages/Home.tsx
-export default function Home() {
-  const { content, fetchContent, mode } = useContent();
-
-  // Define which content keys this page needs
-  const keys = [
-    "home.hero.title",
-    "home.hero.subtitle",
-    "home.hero.body_md",
-  ];
-
-  // Fetch on mount (and when draft/published mode changes)
-  useEffect(() => {
-    fetchContent(keys);
-  }, [mode]);
-
-  // Use the content with fallbacks
-  const title = content["home.hero.title"]?.value || "Welcome";
-  const body = content["home.hero.body_md"]?.value || "";
-
-  return (
-    <div>
-      <h1>{title}</h1>
-      <MarkdownRenderer content={body} />
-    </div>
-  );
-}
-```
-
-### 5. Admin Panel Edits Content
-
-The `/admin` page lets you edit any content key:
-
-1. **Select a key** from the sidebar
-2. **Edit the value** (single-line input for plain text, textarea for markdown)
-3. **Save Draft** → stores in `current_draft` column
-4. **Publish** → copies to `current_published` column
-
-### Content Types
-
-| Type | Editor | Use Case |
-|------|--------|----------|
-| `plain` | Single-line input | Titles, labels, URLs, short text |
-| `markdown` | Multiline textarea + preview | Long-form content, instructions |
-| `rich_json` | JSON textarea | Structured data like FAQ items |
-
-### Key Naming Convention
-
-Keys follow a hierarchical pattern:
+Use a hierarchical pattern for organization:
 
 ```
 <page>.<section>.<field>
-<page>.<section>.<field>_md          # markdown content
-wizard.<wizard_id>.step.<n>.<section>.<field>
+<page>.<section>.<field>_md        # markdown content
+wizard.<id>.step.<n>.<section>.<field>
 ```
 
 Examples:
-- `home.hero.title` → Home page, hero section, title field
-- `home.hero.body_md` → Home page, hero section, body (markdown)
-- `wizard.secure_access_setup.step.1.header.title` → Wizard 1, Step 1, header title
+- `home.hero.title` → Homepage hero title
+- `home.hero.body_md` → Homepage hero body (markdown)
+- `faq.items` → FAQ list (rich_json array)
+- `wizard.onboarding.step.1.header.title` → Onboarding step 1 title
 
-## 📁 Project Structure
+## Running This Reference Implementation
 
-```
-micro-cms-concept/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app
-│   │   ├── models.py            # SQLAlchemy ORM models
-│   │   ├── schemas.py           # Pydantic validation schemas
-│   │   ├── database.py          # DB connection, init, seed
-│   │   ├── crud.py              # Data access layer
-│   │   ├── api/
-│   │   │   ├── content.py       # Content endpoints
-│   │   │   └── wizards.py       # Wizard run endpoints
-│   │   └── __init__.py
-│   ├── alembic/
-│   │   ├── env.py               # Alembic runtime config
-│   │   ├── script.py.mako       # Migration template
-│   │   ├── versions/
-│   │   │   ├── 001_initial_schema.py  # Schema migration
-│   │   │   └── __init__.py
-│   │   └── __init__.py
-│   ├── Dockerfile
-│   ├── entrypoint.sh
-│   ├── requirements.txt
-│   ├── alembic.ini
-│   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── MarkdownRenderer.tsx  # Safe markdown rendering
-│   │   ├── context/
-│   │   │   └── ContentContext.tsx    # Global content state
-│   │   ├── hooks/
-│   │   │   └── useContent.ts         # Content hook
-│   │   ├── pages/
-│   │   │   ├── Home.tsx
-│   │   │   ├── FAQ.tsx
-│   │   │   ├── About.tsx
-│   │   │   ├── Admin.tsx             # Edit everything here
-│   │   │   ├── Wizard1Step1.tsx      # Secure Access Setup: Step 1
-│   │   │   ├── Wizard1Step2.tsx      # Secure Access Setup: Step 2
-│   │   │   ├── Wizard1Step3.tsx      # Secure Access Setup: Step 3
-│   │   │   ├── Wizard2Step1.tsx      # Data Import Quickstart: Step 1
-│   │   │   ├── Wizard2Step2.tsx      # Data Import Quickstart: Step 2
-│   │   │   └── Wizard2Step3.tsx      # Data Import Quickstart: Step 3
-│   │   ├── App.tsx
-│   │   ├── App.css
-│   │   └── main.tsx
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   ├── Dockerfile
-│   ├── .env.example
-│   └── .gitignore
-├── docker-compose.yml
-└── README.md
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Docker & Docker Compose
-- (Optional) Node.js 24.13.0 + Python 3.14.3 for local development
-
-### Run Everything
+### Quick Start
 
 ```bash
 docker compose up --build
 ```
 
-Then:
-- **Web App**: http://localhost:5173
-- **Admin Panel**: http://localhost:5173/admin
-- **API**: http://localhost:8000 (also proxied at http://localhost:5173/api)
-- **API Health**: http://localhost:5173/health
+Then open:
+- **App**: http://localhost:5173
+- **Admin**: http://localhost:5173/admin
+- **API**: http://localhost:8000
 
-The database will auto-initialize with migrations and seed data on first run.
+### What's Included
 
-### Local Development (Without Docker)
+This repo demonstrates the pattern with:
 
-**Backend:**
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+- **React frontend** with content fetching via context
+- **FastAPI backend** with content and revision APIs
+- **PostgreSQL** with the schema above
+- **Admin panel** for editing all content types
+- **Draft/publish workflow** with revision history
+- **Two example wizards** showing editable multi-step flows
 
-export DATABASE_URL="postgresql://cms_user:cms_password@localhost/micro_cms"
-python -m alembic upgrade head
-uvicorn app.main:app --reload
-```
+## Integrating Into Your App
 
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### 1. Add the Tables
 
-Then open http://localhost:5173
+Run the migration or create tables manually:
 
-## 📖 Site Routes
-
-### Public Pages
-
-- **`/`** – Home splash (hero section, CTA, feature list)
-- **`/faq`** – FAQ items (editable JSON array)
-- **`/about`** – About page (markdown)
-
-### Wizards
-
-**Secure Access Setup** (3-step wizard)
-- **`/wizard/secure-access/step-1`** – Choose account recovery method
-- **`/wizard/secure-access/step-2`** – Enable 2FA
-- **`/wizard/secure-access/step-3`** – Review & confirm
-- Saves to `wizard_runs` table on completion
-
-**Data Import Quickstart** (3-step wizard)
-- **`/wizard/data-import/step-1`** – Select data source (paste CSV or upload)
-- **`/wizard/data-import/step-2`** – Map columns to required fields
-- **`/wizard/data-import/step-3`** – Validate & import
-- Saves to `wizard_runs` table on completion
-
-### Admin
-
-- **`/admin`** – Content editor panel
-  - Edit all pages and wizard instructions
-  - View and restore revision history
-  - Save draft and publish separately
-  - Live markdown preview
-
-## 🗄️ Database Schema
-
-### `content_entries`
 ```sql
-key          TEXT PRIMARY KEY
-type         ENUM('plain', 'markdown', 'rich_json')
-current_draft     TEXT (nullable)
-current_published TEXT (nullable)
-updated_at   TIMESTAMP
-updated_by   TEXT (default: "default")
+-- Content type enum
+CREATE TYPE contenttypeenum AS ENUM ('plain', 'markdown', 'rich_json');
+CREATE TYPE revisionmodeenum AS ENUM ('draft', 'published');
+
+-- Main content storage
+CREATE TABLE content_entries (
+    key VARCHAR(255) PRIMARY KEY,
+    type contenttypeenum NOT NULL,
+    current_draft TEXT,
+    current_published TEXT,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    updated_by VARCHAR(100) DEFAULT 'system'
+);
+
+-- Revision history
+CREATE TABLE content_revisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key VARCHAR(255) REFERENCES content_entries(key),
+    mode revisionmodeenum NOT NULL,
+    type contenttypeenum NOT NULL,
+    value TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    created_by VARCHAR(100) DEFAULT 'system'
+);
+
+CREATE INDEX idx_revisions_key ON content_revisions(key);
+CREATE INDEX idx_revisions_created_at ON content_revisions(created_at);
 ```
 
-### `content_revisions`
-```sql
-id         UUID PRIMARY KEY
-key        TEXT FOREIGN KEY -> content_entries.key
-mode       ENUM('draft', 'published')
-type       ENUM('plain', 'markdown', 'rich_json')
-value      TEXT
-created_at TIMESTAMP
-created_by TEXT (default: "default")
+### 2. Add API Endpoints
+
+You need three basic endpoints:
+
+```
+GET  /api/content?keys=a,b,c&mode=published  → Fetch content
+PUT  /api/content/{key}                       → Save draft
+POST /api/content/{key}/publish               → Publish draft
 ```
 
-### `wizard_runs`
-```sql
-id         UUID PRIMARY KEY
-wizard_id  TEXT (e.g., "secure_access_setup", "data_import_quickstart")
-step       TEXT (current step number/state)
-data       TEXT (JSON string of collected form data)
-completed  BOOLEAN
-created_at TIMESTAMP
-updated_at TIMESTAMP
+See `backend/app/api/content.py` for the full implementation.
+
+### 3. Fetch Content in Your App
+
+Replace hardcoded strings with content lookups:
+
+```tsx
+// Before
+<h1>Welcome to Our App</h1>
+
+// After
+const title = content["home.hero.title"]?.value || "Welcome to Our App";
+<h1>{title}</h1>
 ```
 
-## 📝 Content Keys
+The fallback ensures your app works even if content hasn't been seeded yet.
 
-All content is identified by stable string keys following this pattern:
+### 4. Build an Admin Panel
 
-### Pages
-- `home.hero.title` (plain)
-- `home.hero.subtitle` (plain)
-- `home.hero.body_md` (markdown)
-- `home.cta.label` (plain)
-- `home.cta.href` (plain)
-- `about.page.body_md` (markdown)
-- `faq.items` (rich_json: array of `{question, answer_md}`)
+Or copy/adapt the one in this repo (`frontend/src/pages/Admin.tsx`). Key features:
+- List all content keys
+- Edit with appropriate editor (text input, markdown, JSON)
+- Save as draft, preview, then publish
+- View and restore from revision history
 
-### Wizards
-Pattern: `wizard.<wizard_id>.step.<n>.<section>.<field>`
+## Content Types
 
-**Example for Wizard 1, Step 1:**
-- `wizard.secure_access_setup.step.1.header.title` (plain)
-- `wizard.secure_access_setup.step.1.body.intro_md` (markdown)
-- `wizard.secure_access_setup.step.1.callout.note_md` (markdown)
-- `wizard.secure_access_setup.step.1.footer.next_label` (plain)
+| Type | Use Case | Editor |
+|------|----------|--------|
+| `plain` | Titles, labels, short text (max 2000 chars) | Single-line input |
+| `markdown` | Long-form content, instructions (max 50K chars) | Textarea with preview |
+| `rich_json` | Structured data like FAQ items (max 50K chars) | JSON editor |
 
-All wizard steps follow the same pattern. See `backend/app/database.py` for the complete list of seed keys.
+## Draft Mode
 
-## 🎨 Draft Mode & Preview
+The dual-column design (`current_draft` / `current_published`) enables:
 
-**How it works:**
+1. **Edit safely** - drafts don't affect live users
+2. **Preview changes** - switch your app to draft mode to see pending changes
+3. **Publish when ready** - one click copies draft to published
+4. **Rollback easily** - restore any revision to draft or published
 
-1. **Toggle Draft Mode**: Use the "📝 Preview Draft" button in the top-right (only visible when in Published mode)
-2. **Admin Editing**: When you save a draft in `/admin`, it's stored in `content_entries.current_draft`
-3. **Live Preview**: Switch to Draft mode to see unpublished changes across all pages and wizards
-4. **Publish**: The "🚀 Publish" button copies `current_draft` → `current_published`
-5. **Visual Indicator**: A yellow banner shows when Draft mode is active
+## Tech Stack (This Implementation)
 
-## 🔄 Versioning & Restore
+- **Frontend**: React, TypeScript, Vite
+- **Backend**: FastAPI, SQLAlchemy, Alembic
+- **Database**: PostgreSQL
+- **Containerization**: Docker Compose
 
-Every change creates a new row in `content_revisions`:
+Adapt to your stack. The pattern works with any language/framework.
 
-- **Save Draft** → creates a `mode='draft'` revision
-- **Publish** → creates a `mode='published'` revision
-- **Restore** → fetches an old revision and creates a **new** revision marked as a restore (history is never deleted)
+## License
 
-**To restore:**
-1. Open `/admin` and select a content item
-2. Click "▶ Revision History" to expand
-3. Select any previous version and click "Restore"
-4. Choose restore to `draft` or `published`
-
-## 📦 Tech Stack
-
-### Frontend
-- **React 19.2.4** – UI framework
-- **Vite 7.3.1** – Build tool
-- **TypeScript 5.9.3** – Type safety
-- **react-md-editor 4.0.4** – Markdown editing with live preview
-- **DOMPurify 3.0.6** – HTML sanitization
-- **marked 11.1.1** – Markdown parsing
-
-### Backend
-- **FastAPI 0.128.0** – Web framework
-- **SQLAlchemy 2.0.46** – ORM
-- **Alembic 1.18.3** – Database migrations
-- **PostgreSQL 18** – Database
-
-### DevOps
-- **Docker & Compose** – Containerization
-- **Node.js 24.13.0** – Frontend runtime
-- **Python 3.14.3** – Backend runtime
-
-## 🔐 Security Notes
-
-### Safe Markdown Rendering
-
-The `MarkdownRenderer` component:
-- Parses markdown with `marked`
-- Sanitizes output with DOMPurify
-- Allows only safe tags: `<p>`, `<a>`, `<ul>`, `<ol>`, `<li>`, `<strong>`, `<em>`, `<code>`, `<pre>`, `<h2>`, `<h3>`, `<blockquote>`, `<hr>`, `<br>`
-- Blocks raw HTML and JavaScript
-
-### No Authentication
-
-This demo uses a single "default" user. To add real auth:
-
-1. Add auth middleware to FastAPI (e.g., JWT tokens)
-2. Update `created_by`/`updated_by` fields to track actual users
-3. Add role-based access control in `/admin`
-4. Protect API endpoints with `@require_auth` decorator
-
-## 🛠️ Common Tasks
-
-### Add a New Content Key
-
-1. **Create the entry** in `backend/app/database.py` (search `seed_entries`):
-   ```python
-   {"key": "my.new.key", "type": "markdown"},
-   ```
-
-2. **Add seed value** in same file (search `seed_values`):
-   ```python
-   "my.new.key": ("markdown", "My default content here"),
-   ```
-
-3. **Use in frontend**:
-   ```tsx
-   const { content, fetchContent } = useContent();
-   useEffect(() => {
-     fetchContent(["my.new.key"]);
-   }, []);
-   const value = content["my.new.key"]?.value || "fallback";
-   ```
-
-4. **Restart containers**:
-   ```bash
-   docker compose up --build
-   ```
-
-### Add a New Page
-
-1. Create a new component in `frontend/src/pages/YourPage.tsx`
-2. Import and add a route in `App.tsx`
-3. Create content keys for the page
-4. Add to seed data in backend
-
-### Add a New Wizard Step
-
-1. Create step page in `frontend/src/pages/WizardXStepY.tsx`
-2. Add routes in `App.tsx`
-3. Create content keys following the naming convention
-4. Seed content in backend
-5. Update navigation links
-
-## 📊 Content Type Guidelines
-
-### `"plain"`
-- Plain text, no formatting
-- Max: 2000 characters
-- Use for: titles, labels, short text
-
-### `"markdown"`
-- Markdown syntax (headers, lists, bold, italic, links, code blocks)
-- Max: 50,000 characters
-- Use for: long-form content, instructions, descriptions
-- Rendered safely with `MarkdownRenderer`
-
-### `"rich_json"`
-- JSON objects/arrays
-- Max: 50,000 characters
-- Use for: FAQ items `[{question, answer_md}]`, structured data
-- Validate schema in backend before saving
-
-## 🐛 Troubleshooting
-
-### Database Connection Error
-```
-ERROR: connect to db:5432 failed
-```
-→ Ensure PostgreSQL container is healthy: `docker compose ps`
-
-### API Not Responding
-```
-api_1  | Address already in use: ('0.0.0.0', 8000)
-```
-→ Kill the process: `lsof -ti:8000 | xargs kill -9` or use a different port
-
-### Migrations Failed
-```
-Alembic error: unable to connect to database
-```
-→ Wait for DB to start: `docker compose logs db` and check for "database system is ready"
-
-### Styles Not Loading
-→ Rebuild: `docker compose down && docker compose up --build`
-
-## 📚 Learn More
-
-- [FastAPI Docs](https://fastapi.tiangolo.com/)
-- [React Documentation](https://react.dev)
-- [SQLAlchemy ORM](https://docs.sqlalchemy.org/en/20/)
-- [Alembic Migrations](https://alembic.sqlalchemy.org/)
-- [react-md-editor](https://github.com/uiwjs/react-md-editor)
-- [DOMPurify](https://github.com/cure53/DOMPurify)
-
-## 📄 License
-
-This example is provided as-is for educational and demonstration purposes.
-
----
-
-**Happy building! 🚀**
+MIT - Use however you like.
