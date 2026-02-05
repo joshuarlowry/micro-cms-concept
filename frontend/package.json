@@ -1,0 +1,27 @@
+{
+  "name": "micro-cms",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-markdown": "8.0.7",
+    "dompurify": "3.0.6",
+    "marked": "11.1.1"
+  },
+  "devDependencies": {
+    "@types/dompurify": "3.0.5",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "@types/node": "22.12.0",
+    "@vitejs/plugin-react": "5.0.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.1"
+  }
+}
