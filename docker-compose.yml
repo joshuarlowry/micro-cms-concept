@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   db:
-    image: postgres:18
+    image: postgres:16
     container_name: micro-cms-db
     environment:
       POSTGRES_USER: cms_user
@@ -37,7 +37,7 @@ services:
     networks:
       - cms-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     container_name: micro-cms-web
     ports:
-      - "3000:3000"
+      - "5173:3000"
     depends_on:
       api:
         condition: service_healthy

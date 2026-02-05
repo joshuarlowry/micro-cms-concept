@@ -7,6 +7,7 @@ Create Date: 2026-02-04
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "001"
@@ -16,18 +17,15 @@ depends_on = None
 
 
 def upgrade():
-    # Create ENUM types
-    content_type_enum = sa.Enum("plain", "markdown", "rich_json", name="contenttypeenum")
-    content_type_enum.create(op.get_bind(), checkfirst=True)
-
-    revision_mode_enum = sa.Enum("draft", "published", name="revisionmodeenum")
-    revision_mode_enum.create(op.get_bind(), checkfirst=True)
+    # Create ENUM types using raw SQL with IF NOT EXISTS
+    op.execute("CREATE TYPE contenttypeenum AS ENUM ('plain', 'markdown', 'rich_json')")
+    op.execute("CREATE TYPE revisionmodeenum AS ENUM ('draft', 'published')")
 
     # Create content_entries table
     op.create_table(
         "content_entries",
         sa.Column("key", sa.String(255), nullable=False, primary_key=True),
-        sa.Column("type", sa.Enum("plain", "markdown", "rich_json", name="contenttypeenum"), nullable=False),
+        sa.Column("type", postgresql.ENUM("plain", "markdown", "rich_json", name="contenttypeenum", create_type=False), nullable=False),
         sa.Column("current_draft", sa.Text(), nullable=True),
         sa.Column("current_published", sa.Text(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
@@ -40,8 +38,8 @@ def upgrade():
         "content_revisions",
         sa.Column("id", sa.String(36), nullable=False, primary_key=True),
         sa.Column("key", sa.String(255), nullable=False),
-        sa.Column("mode", sa.Enum("draft", "published", name="revisionmodeenum"), nullable=False),
-        sa.Column("type", sa.Enum("plain", "markdown", "rich_json", name="contenttypeenum"), nullable=False),
+        sa.Column("mode", postgresql.ENUM("draft", "published", name="revisionmodeenum", create_type=False), nullable=False),
+        sa.Column("type", postgresql.ENUM("plain", "markdown", "rich_json", name="contenttypeenum", create_type=False), nullable=False),
         sa.Column("value", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("created_by", sa.String(100), nullable=True),
